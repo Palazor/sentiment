@@ -7,6 +7,7 @@ from lxml import etree
 import nltk
 nltk.data.path.append('/media/razor/Files/Python27/nltk_data')
 from nlpjieba import segment
+from phrase import parsePhrase
 
 def getXml(docxFilename):
     zip = zipfile.ZipFile(open(docxFilename))
@@ -130,11 +131,17 @@ def run_preprocess(path):
     #         xmlContent = getXml(path + filename)
 
     sentences = parseDocx(getXml(path + '1.docx'))
+    partos = {}
     for (sentence, pos, neg) in sentences:
-        print sentence
-        for term in pos:
-            print 'pos:', term[0], term[1].encode('utf-8')
-        for term in neg:
-            print 'neg:', term[0], term[1].encode('utf-8')
+        # print sentence
+        # for term in pos:
+        #     print 'pos:', term[0], term[1].encode('utf-8')
+        # for term in neg:
+        #     print 'neg:', term[0], term[1].encode('utf-8')
         segs = segment(sentence)
-        print segs
+        tagged = [(term.word, term.flag) for term in segs]
+        for (w, f) in tagged:
+            if not partos.has_key(f):
+                partos[f] = f
+        parsePhrase(tagged)
+    print partos

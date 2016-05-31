@@ -39,11 +39,24 @@ def _parsePhrase(sentence):
 
 
 def parsePhrase(tagged):
-    _grammar = ''
+    _grammar = r"""
+    n:
+        {<nr>}  # Nouns and Adjectives, terminated with Nouns
+        {<ns>}  # Nouns and Adjectives, terminated with Nouns
+        {<eng>}  # Nouns and Adjectives, terminated with Nouns
+    NBAR:
+        {<ad.*|n>*<n.*>}  # Nouns and Adjectives, terminated with Nouns
+
+    NP:
+        {<NBAR>}
+        {<NBAR><IN><NBAR>}  # Above, connected with in/of/etc...
+"""
     chunker = nltk.RegexpParser(_grammar)
     tree = chunker.parse(tagged)
 
     terms = get_terms(tree)
+    for term in terms:
+        print ''.join(term).encode('utf-8')
 
 
 start = time.time()
