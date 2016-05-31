@@ -65,7 +65,7 @@ def cut_sentence(words):
     start = 0
     i = 0
     sents = []
-    punt_list = ',.!?:;~，。！？：；～'.decode('utf8')  #string 必须要解码为 unicode 才能进行匹配
+    punt_list = u',.!?:;~，。！？：；～'
     for word in words:
         if word in punt_list:
             sents.append(words[start:i+1])
@@ -105,16 +105,18 @@ def parseDocx(docx_string):
         elif color == NEG:
             neg.append((len(sentence), text))
 
-        for sen in cut_sentence(text):
-            print sen.encode('utf-8')
-        frags = refineSentence(text)
+        frags = cut_sentence(text)
         sentence += frags[0]
         numS = len(frags)
         if numS > 1:
             sentences.append((sentence, pos, neg))
+            pos = []
+            neg = []
             sentence = ''
             for i in range(1, numS - 1):
                 sentences.append((frags[i], [], []))
+                pos = []
+                neg = []
             if numS >= 2:
                 sentence = frags[numS - 1]
 
@@ -130,5 +132,9 @@ def run_preprocess(path):
     sentences = parseDocx(getXml(path + '1.docx'))
     for (sentence, pos, neg) in sentences:
         print sentence
+        for term in pos:
+            print 'pos:', term[0], term[1].encode('utf-8')
+        for term in neg:
+            print 'neg:', term[0], term[1].encode('utf-8')
         segs = segment(sentence)
         print segs
