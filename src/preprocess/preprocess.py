@@ -4,6 +4,7 @@ import os
 import os.path
 import zipfile
 from lxml import etree
+import json
 import nltk
 nltk.data.path.append('/media/razor/Files/Python27/nltk_data')
 from nlpjieba import segment
@@ -106,7 +107,12 @@ def parseDocx(docx_string):
         elif color == NEG:
             neg.append((len(sentence), text))
 
-        frags = cut_sentence(text)
+        if not text:
+            continue
+        nospace = text.replace(' ', '').replace('\t', '').replace(u'　', '')
+        if nospace == '':
+            continue
+        frags = cut_sentence(nospace)
         sentence += frags[0]
         numS = len(frags)
         if numS > 1:
@@ -126,22 +132,38 @@ def parseDocx(docx_string):
 
 def run_preprocess(path):
     xmlContent = None
-    # for parent, dirnames, filenames in os.walk(path):
-    #     for filename in filenames:
-    #         xmlContent = getXml(path + filename)
+    poses = {}
+    pos_count = {}
+    for parent, dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            print filename
+            sentences = parseDocx(getXml(path + filename))
 
-    sentences = parseDocx(getXml(path + '1.docx'))
-    partos = {}
-    for (sentence, pos, neg) in sentences:
-        # print sentence
-        # for term in pos:
-        #     print 'pos:', term[0], term[1].encode('utf-8')
-        # for term in neg:
-        #     print 'neg:', term[0], term[1].encode('utf-8')
-        segs = segment(sentence)
-        tagged = [(term.word, term.flag) for term in segs]
-        for (w, f) in tagged:
-            if not partos.has_key(f):
-                partos[f] = f
-        parsePhrase(tagged)
-    print partos
+            f = open('../test/sentences.txt', 'w+')
+            f.write(json.dumps(sentences, ensure_ascii=False).encode('utf-8'))
+            f.close()
+            for (sentence, pos, neg) in sentences:
+                segs = segment(sentence)
+                tagged = [(term.word, term.flag) for term in segs]
+                phrase = parsePhrase(tagged)
+                print [term for term in segs]
+
+    # sentences = parseDocx(getXml(path + '1.docx'))
+    # for (sentence, pos, neg) in sentences:
+    #     segs = segment(sentence)
+    #     tagged = [(term.word, term.flag) for term in segs]
+    #     for (w, f) in tagged:
+    #         if not poses.has_key(f):
+    #             poses[f] = {}
+    #         if not poses.has_key(w):
+    #             poses[f][w] = True
+
+    # pos_array = []
+    # for f in poses:
+    #     print f, pos_count[f]
+    #     pos_array.append((f, list(poses[f])))
+    # pos_array.sort(lambda a,b:pos_count[b[0]] - pos_count[a[0]])
+    #
+    # f = open('../test/static.txt', 'w+')
+    # f.write(json.dumps(pos_array, ensure_ascii=False).encode('utf-8'))
+    # f.close()

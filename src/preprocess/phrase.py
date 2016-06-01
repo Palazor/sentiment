@@ -15,7 +15,7 @@ grammar = r"""
 
 def leaves(tree):
     """Finds NP (nounphrase) leaf nodes of a chunk tree."""
-    for subtree in tree.subtrees(filter = lambda t: t.label()=='NP'):
+    for subtree in tree.subtrees(filter = lambda t: t.label()=='VP' or t.label()=='NP'):
         yield subtree.leaves()
 
 def get_terms(tree):
@@ -39,17 +39,55 @@ def _parsePhrase(sentence):
 
 
 def parsePhrase(tagged):
+    # u o ul ug ud uv uz
     _grammar = r"""
     n:
-        {<nr>}  # Nouns and Adjectives, terminated with Nouns
-        {<ns>}  # Nouns and Adjectives, terminated with Nouns
-        {<eng>}  # Nouns and Adjectives, terminated with Nouns
+        {<nr>}
+        {<ns>}
+        {<nz>}
+        {<nrt>}
+        {<ng>}
+        {<nrfg>}
+        {<g>}
+        {<eng>}
+        {<vn>}
+        {<j>}
+        {<r>}
+        {<t>}
+        {<i>}
+        {<nt>}
+        {<k>}
+        {<b>}
+        {<s>}
+    mq:
+        {<m>}
+        {<m><q>}
+    v:
+        {<zg>}
+    adj:
+        {<a>}
+        {<ag>}
+        {<an>}
+    adv:
+        {<d>}
+        {<ad>}
+        {<vg>}
+        {<z>}
+    A:
+        {<adj>*<adj>}
+        {<adv>*<adj>}
     NBAR:
-        {<ad.*|n>*<n.*>}  # Nouns and Adjectives, terminated with Nouns
-
+        {<l>}
+        {<A.*|n>*<n.*>}
+        {<n.*>*<f.*><n.*>*}
+        {<p.*>*<NBAR>}
     NP:
         {<NBAR>}
-        {<NBAR><IN><NBAR>}  # Above, connected with in/of/etc...
+        {<mq><NBAR>}
+        {<NBAR><c><NBAR>}
+    VP:
+        {<A.*>*<v.*>*}
+        {<VP>*<NP>}
 """
     chunker = nltk.RegexpParser(_grammar)
     tree = chunker.parse(tagged)
