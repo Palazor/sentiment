@@ -10,6 +10,8 @@ nltk.data.path.append('/media/razor/Files/Python27/nltk_data')
 from nlpjieba import segment
 from phrase import parsePhrase
 
+punt_list = u',.!?:;~，。！？：；～'
+
 def getXml(docxFilename):
     zip = zipfile.ZipFile(open(docxFilename))
     xmlContent = zip.read("word/document.xml")
@@ -67,7 +69,6 @@ def cut_sentence(words):
     start = 0
     i = 0
     sents = []
-    punt_list = u',.!?:;~，。！？：；～'
     for word in words:
         if word in punt_list:
             sents.append(words[start:i+1])
@@ -140,7 +141,7 @@ def process_samples(path):
     n_array = []
     for parent, dirnames, filenames in os.walk(path):
         for filename in filenames:
-            print filename
+            # print filename
             sentences = parseDocx(getXml(path + filename))
 
             # f = open('../test/sentences.txt', 'w+')
@@ -249,7 +250,12 @@ def process_samples(path):
     #     else:
     #         print term
 
-    return [s_array, p_array, n_array]
+    coarse_sample = [s_array, p_array, n_array]
+    # f = open('../test/coarse_sample.txt', 'w+')
+    # f.write(json.dumps(coarse_sample, ensure_ascii=False).encode('utf-8'))
+    # f.close()
+
+    return coarse_sample
 
                 # index = 0
                 # length = 0
@@ -301,7 +307,29 @@ def extract_feature_unigram(sentences):
     features = []
     count_pos = 0
     count_neg = 0
+    terms = []
 
+    for index in range(0, len(sentence)):
+        term = sentence[index]
+        terms.append(term)
 
+        if index in pos:
+            count_pos += 1
+        elif index in neg:
+            count_neg += 1
 
+        if term in punt_list:
+            polar = 'neu'
+            if count_pos > count_neg:
+                polar = 'pos'
+            elif count_neg > count_pos:
+                polar = 'neg'
+            features.append([terms, polar])
+            count_pos = 0
+            count_neg = 0
+            terms = []
+
+    f = open('../test/unigram.txt', 'w+')
+    f.write(json.dumps(features, ensure_ascii=False).encode('utf-8'))
+    f.close()
     return features
