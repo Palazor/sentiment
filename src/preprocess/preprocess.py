@@ -127,30 +127,32 @@ def parseDocx(docx_string):
                 neg = []
             if numS >= 2:
                 sentence = frags[numS - 1]
+    sentences.append([sentence, pos, neg])
 
     return sentences
 
 
-def run_preprocess(path):
+def process_samples(path):
     # poses = {}
     # pos_count = {}
-    # for parent, dirnames, filenames in os.walk(path):
-    #     for filename in filenames:
-    #         print filename
-            sentences = parseDocx(getXml(path + '1.docx'))
+    s_array = []
+    p_array = []
+    n_array = []
+    for parent, dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            print filename
+            sentences = parseDocx(getXml(path + filename))
 
             # f = open('../test/sentences.txt', 'w+')
             # f.write(json.dumps(sentences, ensure_ascii=False).encode('utf-8'))
             # f.close()
+
             for sentence in sentences:
                 s = sentence[0]
                 pos = sentence[1]
                 neg = sentence[2]
                 segs = segment(s)
 
-                s_array = []
-                p_array = []
-                n_array = []
                 length = 0
                 p = 0
                 n = 0
@@ -238,14 +240,16 @@ def run_preprocess(path):
                         s_array.append(term)
                         length += num
 
-                for index in range(0, len(s_array)):
-                    term = s_array[index]
-                    if index in p_array:
-                        print '+' + term + '+'
-                    elif index in n_array:
-                        print '-' + term + '-'
-                    else:
-                        print term
+    # for index in range(0, len(s_array)):
+    #     term = s_array[index]
+    #     if index in p_array:
+    #         print '+' + term + '+'
+    #     elif index in n_array:
+    #         print '-' + term + '-'
+    #     else:
+    #         print term
+
+    return [s_array, p_array, n_array]
 
                 # index = 0
                 # length = 0
@@ -287,3 +291,17 @@ def run_preprocess(path):
     # f = open('../test/static.txt', 'w+')
     # f.write(json.dumps(pos_array, ensure_ascii=False).encode('utf-8'))
     # f.close()
+
+
+def extract_feature_unigram(sentences):
+    sentence = sentences[0]
+    pos = sentences[1]
+    neg = sentences[2]
+
+    features = []
+    count_pos = 0
+    count_neg = 0
+
+
+
+    return features
