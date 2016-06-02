@@ -4,6 +4,7 @@ import jieba
 import jieba.posseg
 
 def segment(sentence):
-    seg = jieba.posseg.cut(sentence)
+    seg = jieba.cut(sentence)
+    # seg = jieba.posseg.cut(sentence)
 
     return seg

@@ -99,6 +99,12 @@ def parseDocx(docx_string):
         text = None
         for nodeText in seg.iter(TEXT):
             text = nodeText.text
+        if not text:
+            continue
+        text = text.replace(' ', '').replace('\t', '').replace(u'　', '')
+        if text == '':
+            continue
+
         color = None
         for nodeColor in seg.getiterator(COLOR):
             color = nodeColor.attrib[VALUE]
@@ -107,21 +113,16 @@ def parseDocx(docx_string):
         elif color == NEG:
             neg.append((len(sentence), text))
 
-        if not text:
-            continue
-        nospace = text.replace(' ', '').replace('\t', '').replace(u'　', '')
-        if nospace == '':
-            continue
-        frags = cut_sentence(nospace)
+        frags = cut_sentence(text)
         sentence += frags[0]
         numS = len(frags)
         if numS > 1:
-            sentences.append((sentence, pos, neg))
+            sentences.append([sentence, pos, neg])
             pos = []
             neg = []
             sentence = ''
             for i in range(1, numS - 1):
-                sentences.append((frags[i], [], []))
+                sentences.append([frags[i], [], []])
                 pos = []
                 neg = []
             if numS >= 2:
@@ -131,22 +132,141 @@ def parseDocx(docx_string):
 
 
 def run_preprocess(path):
-    xmlContent = None
-    poses = {}
-    pos_count = {}
-    for parent, dirnames, filenames in os.walk(path):
-        for filename in filenames:
-            print filename
-            sentences = parseDocx(getXml(path + filename))
+    # poses = {}
+    # pos_count = {}
+    # for parent, dirnames, filenames in os.walk(path):
+    #     for filename in filenames:
+    #         print filename
+            sentences = parseDocx(getXml(path + '1.docx'))
 
-            f = open('../test/sentences.txt', 'w+')
-            f.write(json.dumps(sentences, ensure_ascii=False).encode('utf-8'))
-            f.close()
-            for (sentence, pos, neg) in sentences:
-                segs = segment(sentence)
-                tagged = [(term.word, term.flag) for term in segs]
-                phrase = parsePhrase(tagged)
-                print [term for term in segs]
+            # f = open('../test/sentences.txt', 'w+')
+            # f.write(json.dumps(sentences, ensure_ascii=False).encode('utf-8'))
+            # f.close()
+            for sentence in sentences:
+                s = sentence[0]
+                pos = sentence[1]
+                neg = sentence[2]
+                segs = segment(s)
+
+                s_array = []
+                p_array = []
+                n_array = []
+                length = 0
+                p = 0
+                n = 0
+                p_pos = None
+                p_term = None
+                if len(pos) > 0 and p < len(pos):
+                    p_pos = pos[p][0]
+                    p_term = pos[p][1]
+                n_pos = None
+                n_term = None
+                if len(neg) > 0 and n < len(neg):
+                    n_pos = neg[n][0]
+                    n_term = neg[n][1]
+                for term in segs:
+                    num = len(term)
+                    if p_pos and length == p_pos:
+                        p_len = len(p_term)
+                        p_array.append(len(s_array))
+                        length += num
+                        if num < p_len:
+                            s_array.append(term)
+                            p_pos = length
+                            p_term = p_term[num: 100]
+                        else:
+                            s_array.append(p_term)
+                            p += 1
+                            if p < len(pos):
+                                p_pos = pos[p][0]
+                                p_term = pos[p][1]
+                            else:
+                                p_pos = None
+                                p_term = None
+                            if num > p_len:
+                                s_array.append(term[p_len: num])
+                    elif p_pos and length + num > p_pos:
+                        s_array.append(term[0: p_pos - length])
+                        p_array.append(len(s_array))
+                        s_array.append(p_term)
+                        left = term[p_pos - length + len(p_term): num]
+                        if left != '':
+                            s_array.append(left)
+                        length += num
+                        p += 1
+                        if p < len(pos):
+                            p_pos = pos[p][0]
+                            p_term = pos[p][1]
+                        else:
+                            p_pos = None
+                            p_term = None
+                    elif n_pos and length == n_pos:
+                        n_len = len(n_term)
+                        n_array.append(len(s_array))
+                        length += num
+                        if num < n_len:
+                            s_array.append(term)
+                            n_pos = length
+                            n_term = n_term[num: 100]
+                        else:
+                            s_array.append(n_term)
+                            n += 1
+                            if n < len(neg):
+                                n_pos = neg[n][0]
+                                n_term = neg[n][1]
+                            else:
+                                n_pos = None
+                                n_term = None
+                            if num > n_len:
+                                s_array.append(term[n_len: num])
+                    elif n_pos and length + num > n_pos:
+                        s_array.append(term[0: n_pos - length])
+                        n_array.append(len(s_array))
+                        s_array.append(n_term)
+                        left = term[n_pos - length + len(n_term): num]
+                        if left != '':
+                            s_array.append(left)
+                        length += num
+                        n += 1
+                        if n < len(neg):
+                            n_pos = neg[n][0]
+                            n_term = neg[n][1]
+                        else:
+                            n_pos = None
+                            n_term = None
+                    else:
+                        s_array.append(term)
+                        length += num
+
+                for index in range(0, len(s_array)):
+                    term = s_array[index]
+                    if index in p_array:
+                        print '+' + term + '+'
+                    elif index in n_array:
+                        print '-' + term + '-'
+                    else:
+                        print term
+
+                # index = 0
+                # length = 0
+                # for item in p:
+                #     term = item[1]
+                #     while length < item[0]:
+                #         length += len(segs[index])
+                #         index += 1
+                #     if term != segs[index]:
+                #         print term
+                #
+                # index = 0
+                # length = 0
+                # for item in n:
+                #     term = item[1]
+                #     while length < item[0]:
+                #         length += len(segs[index])
+                #         index += 1
+                #     if term != segs[index]:
+                #         print term
+
 
     # sentences = parseDocx(getXml(path + '1.docx'))
     # for (sentence, pos, neg) in sentences:
