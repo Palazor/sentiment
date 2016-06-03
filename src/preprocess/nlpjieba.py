@@ -2,6 +2,7 @@
 
 import jieba
 import jieba.posseg
+jieba.load_userdict('../test/userdict.txt')
 
 def segment(sentence):
     seg = jieba.cut(sentence)

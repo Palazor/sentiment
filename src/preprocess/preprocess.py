@@ -133,7 +133,41 @@ def parseDocx(docx_string):
     return sentences
 
 
-def process_samples(path):
+def get_polar_files(sentence, pos, neg):
+    pos_features = []
+    neg_features = []
+    count_pos = 0
+    count_neg = 0
+    terms = []
+
+    for index in range(0, len(sentence)):
+        term = sentence[index]
+        terms.append(term)
+
+        if index in pos:
+            count_pos += 1
+        elif index in neg:
+            count_neg += 1
+
+        if term in punt_list:
+            if count_pos > count_neg:
+                pos_features.append(terms)
+            elif count_neg > count_pos:
+                neg_features.append(terms)
+            count_pos = 0
+            count_neg = 0
+            terms = []
+
+    f = open('../test/pos_features.txt', 'w+')
+    f.write(json.dumps(pos_features, ensure_ascii=False).encode('utf-8'))
+    f.close()
+
+    f = open('../test/neg_features.txt', 'w+')
+    f.write(json.dumps(neg_features, ensure_ascii=False).encode('utf-8'))
+    f.close()
+
+
+def process_train_samples(path):
     # poses = {}
     # pos_count = {}
     s_array = []
@@ -250,12 +284,12 @@ def process_samples(path):
     #     else:
     #         print term
 
-    coarse_sample = [s_array, p_array, n_array]
+    # coarse_sample = [s_array, p_array, n_array]
     # f = open('../test/coarse_sample.txt', 'w+')
     # f.write(json.dumps(coarse_sample, ensure_ascii=False).encode('utf-8'))
     # f.close()
 
-    return coarse_sample
+    get_polar_files(s_array, p_array, n_array)
 
                 # index = 0
                 # length = 0
@@ -299,37 +333,8 @@ def process_samples(path):
     # f.close()
 
 
-def extract_feature_unigram(sentences):
-    sentence = sentences[0]
-    pos = sentences[1]
-    neg = sentences[2]
+def process_sample(filename):
+    texts = docx2txt(getXml(filename))
+    segs = segment(texts)
+    return [term for term in segs]
 
-    features = []
-    count_pos = 0
-    count_neg = 0
-    terms = []
-
-    for index in range(0, len(sentence)):
-        term = sentence[index]
-        terms.append(term)
-
-        if index in pos:
-            count_pos += 1
-        elif index in neg:
-            count_neg += 1
-
-        if term in punt_list:
-            polar = 'neu'
-            if count_pos > count_neg:
-                polar = 'pos'
-            elif count_neg > count_pos:
-                polar = 'neg'
-            features.append([terms, polar])
-            count_pos = 0
-            count_neg = 0
-            terms = []
-
-    f = open('../test/unigram.txt', 'w+')
-    f.write(json.dumps(features, ensure_ascii=False).encode('utf-8'))
-    f.close()
-    return features
