@@ -18,31 +18,33 @@ class Extractor():
 
     def __init__(self):
         if not self.best_words:
-            f = open('../test/pos_review.txt')
-            self.pos_data = json.loads(f.readline(), 'utf-8')
-            f.close()
-            # f = open('../test/pos_features.txt')
-            # self.pos_data += json.loads(f.readline(), 'utf-8')
+            # f = open('../test/pos_review.txt')
+            # self.pos_data = json.loads(f.readline(), 'utf-8')
             # f.close()
-            f = open('../test/neg_review.txt')
-            self.neg_data = json.loads(f.readline(), 'utf-8')
+            f = open('../test/pos_features.txt')
+            self.pos_data += json.loads(f.readline(), 'utf-8')
             f.close()
-            # f = open('../test/neg_features.txt')
-            # self.neg_data += json.loads(f.readline(), 'utf-8')
+            # f = open('../test/neg_review.txt')
+            # self.neg_data = json.loads(f.readline(), 'utf-8')
             # f.close()
+            f = open('../test/neg_features.txt')
+            self.neg_data += json.loads(f.readline(), 'utf-8')
+            f.close()
 
             word_scores = self._get_bigram_scores(self.pos_data, self.neg_data)
-            self.best_words = self._find_best_words(word_scores, 1000)
+            self.best_words = self._find_best_words(word_scores)
 
             self.pos_features = []
             for review in self.pos_data:
                 feature = [self._filter_words(review, self.best_words), 'pos']
                 self.pos_features.append(feature)
+            shuffle(self.pos_features)
 
-                self.neg_features = []
+            self.neg_features = []
             for review in self.neg_data:
                 feature = [self._filter_words(review, self.best_words), 'neg']
                 self.neg_features.append(feature)
+            shuffle(self.neg_features)
 
     def _get_bigram_scores(self, posdata, negdata):
         pos_words = list(itertools.chain(*posdata))
@@ -77,17 +79,19 @@ class Extractor():
 
         return word_scores
 
-    def _find_best_words(self, word_scores, number):
-        best_vals = sorted(word_scores.iteritems(), key=lambda (w, s): s, reverse=True)[:number]
+    def _find_best_words(self, word_scores, number = None):
+        best_vals = sorted(word_scores.iteritems(), key=lambda (w, s): s, reverse=True)
+        if number and number > 0:
+            best_vals = best_vals[:number]
         best_words = set([w for w, s in best_vals])
         return best_words
 
     def _filter_words(self, words, best_words):
         d1 = dict([(word, True) for word in words if word in best_words])
-        return d1
-        # d2 = dict([(word, True) for word in nltk.bigrams(words) if word in best_words])
-        # d3 = dict(d1, **d2)
-        # return d3
+        # return d1
+        d2 = dict([(word, True) for word in nltk.bigrams(words) if word in best_words])
+        d3 = dict(d1, **d2)
+        return d3
 
     def extract_feature(self, review_data, polar=None):
         features = []
