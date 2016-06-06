@@ -2,7 +2,9 @@
 
 import json
 
+
 class DictScore:
+
     weight = None
     pos_words = None
     neg_words = None
@@ -26,7 +28,7 @@ class DictScore:
             return 1
 
 
-    def score_review(self, feature):
+    def score_clause(self, feature):
         pos_score = 0
         neg_score = 0
         cur_pos = 0
@@ -37,13 +39,25 @@ class DictScore:
                 for preword in feature[sen_pos:cur_pos]:
                     pos_score *= self._get_weight(preword)
                 sen_pos += 1
-                print word
             elif word in self.neg_words:
                 neg_score += 1
                 for preword in feature[sen_pos:cur_pos]:
                     neg_score *= self._get_weight(preword)
                 sen_pos += 1
-                print word
+            elif word == '!' or word == u"！":
+                pos_score *= 2
+                neg_score *= 2
             cur_pos += 1
 
-        print pos_score, neg_score
+        return 0 if pos_score == neg_score else float(pos_score - neg_score) / float(abs(pos_score) + abs(neg_score))
+
+    def score_review(self, review):
+        if isinstance(review[0], list):
+            final_score = 0
+            score = 0
+            for clause in review:
+                score = self.score_clause(clause)
+                final_score += score
+            return final_score
+        else:
+            return self.score_clause(review)
