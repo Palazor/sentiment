@@ -34,4 +34,4 @@ if __name__ == '__main__':
     # print classifier.classify_batch(feature)
 
     dictScore = DictScore()
-    dictScore.score_review(process_sample('../train/1.docx'))
+    dictScore.score_review(process_sample('../train/3.docx'))

@@ -19,8 +19,11 @@ class DictScore:
         f.close()
 
 
-    def _calc_weight(self, word):
-        return 1
+    def _get_weight(self, word):
+        if self.weight.has_key(word):
+            return self.weight[word]
+        else:
+            return 1
 
 
     def score_review(self, feature):
@@ -32,13 +35,13 @@ class DictScore:
             if word in self.pos_words:
                 pos_score += 1
                 for preword in feature[sen_pos:cur_pos]:
-                    pos_score *= self._calc_weight(preword)
+                    pos_score *= self._get_weight(preword)
                 sen_pos += 1
                 print word
             elif word in self.neg_words:
                 neg_score += 1
                 for preword in feature[sen_pos:cur_pos]:
-                    neg_score *= self._calc_weight(preword)
+                    neg_score *= self._get_weight(preword)
                 sen_pos += 1
                 print word
             cur_pos += 1
